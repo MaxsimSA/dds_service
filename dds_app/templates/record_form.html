@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h1 class="mb-4">
+    {% if form.instance.id %}Редактирование{% else %}Создание{% endif %} записи
+</h1>
+
+<form method="post" class="border p-4 rounded bg-light">
+    {% csrf_token %}
+    
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label class="form-label">Дата*</label>
+            {{ form.date }}
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Статус*</label>
+            {{ form.status }}
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Тип*</label>
+            {{ form.type }}
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Сумма (руб.)*</label>
+            {{ form.amount }}
+        </div>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Категория*</label>
+            {{ form.category }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Подкатегория*</label>
+            {{ form.subcategory }}
+        </div>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">Комментарий</label>
+        {{ form.comment }}
+    </div>
+    
+    <div class="d-flex justify-content-end gap-2">
+        <a href="{% url 'records' %}" class="btn btn-secondary">Отмена</a>
+        <button type="submit" class="btn btn-primary">
+            {% if form.instance.id %}Обновить{% else %}Создать{% endif %}
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Динамическое обновление категорий при выборе типа
+    $('#id_type').change(function() {
+        const typeId = $(this).val();
+        $.ajax({
+            url: '{% url "get_categories" %}',
+            data: {'type_id': typeId},
+            success: function(data) {
+                let options = '<option value="">Выберите категорию</option>';
+                data.forEach(item => {
+                    options += `<option value="${item.id}">${item.name}</option>`;
+                });
+                $('#id_category').html(options).prop('disabled', !typeId);
+                $('#id_subcategory').html('<option value="">Выберите подкатегорию</option>')
+                    .prop('disabled', true);
+            }
+        });
+    });
+
+    // Динамическое обновление подкатегорий при выборе категории
+    $('#id_category').change(function() {
+        const categoryId = $(this).val();
+        $.ajax({
+            url: '{% url "get_subcategories" %}',
+            data: {'category_id': categoryId},
+            success: function(data) {
+                let options = '<option value="">Выберите подкатегорию</option>';
+                data.forEach(item => {
+                    options += `<option value="${item.id}">${item.name}</option>`;
+                });
+                $('#id_subcategory').html(options).prop('disabled', !categoryId);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
